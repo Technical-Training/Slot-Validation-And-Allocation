@@ -1,53 +1,18 @@
-const http = require('http');
+const express = require('express');
 const path = require('path');
-const fs = require('fs');
-const { env } = require('process');
-const { publicDecrypt } = require('crypto');
-const { extname } = require('path');
-const { runInNewContext } = require('vm');
-const { ESRCH } = require('constants');
 
-const server = http.createServer((req, res) => {
-  console.log(`page requested ${req.url}`)
-  let filePath = path.join(__dirname, 'public', req.url === '/' ? 'home.html' : req.url);
+const app = express();
 
-  let extname = path.extname(filePath);
-
-  let contentType = 'text/html';
-  
-  switch(extname) {
-    case '.js':
-      contentType = 'text/javascript';
-      break;
-    case '.css':
-      contentType = 'text/css';
-      break;
-  }
-
-  fs.readFile(filePath, (err, content) => {
-    if (err) {
-      if (err.code == 'ENOENT') {
-        // console.log('file not found');
-        fs.readFile(path.join(__dirname, 'public', '404.html'), (err, content) => {
-          res.writeHead(200, { 'Content-Type': 'text/html' });
-          res.end(content, 'utf8');
-        })
-      } else {
-        // console.log('something is wrong')
-        res.writeHead(500);
-        res.end('Server Error:'+err.code);
-      }
-    } else {
-      // console.log('sent-successfully');
-      res.writeHead(200, { 'Content-Type': contentType });
-      res.end(content, 'utf-8');
-    }
-  });
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'home.html'));
 });
 
-var PORT = process.env.PORT || 8080;
-var addr = require('ip')?.address() || 'localhost';
+app.use(express.static(path.join(__dirname, 'public')));
 
-server .listen(PORT, addr, () => {
-  console.log('server is running on PORT: '+addr+':'+PORT);
+app.use((req, res) => {
+  res.status(200).sendFile(path.join(__dirname, 'public', '404.html'))
+});
+
+app.listen(8080, (err) => {
+  console.log('started');
 });
